@@ -5,14 +5,8 @@ from tensorflow.keras import models
 from tensorflow.keras import layers
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.optimizers import Adam, Nadam, SGD, RMSprop, Adadelta
 
-
-
-def prep_dataset(X, y, shape):
-    x_prep = np.array(X).reshape(len(X), shape)
-    x_prep = x_prep.astype("float32") / 255.0
-    y_prep = to_categorical(np.array(y))
-    return (x_prep, y_prep)
 
 #Cargamos el dataset
 data = pd.read_csv("MNIST/train.csv")
@@ -32,12 +26,6 @@ x_test = x_test.astype("float32") / 255.0
 y_train = to_categorical(np.array(y_train))
 y_val = to_categorical(np.array(y_val))
 
-print("x_train: ", x_train.shape)
-print("x_val: ", x_val.shape)
-print("x_test: ", x_test.shape)
-print("y_train: ", y_train.shape)
-print("y_val: ", y_val.shape)
-
 network = models.Sequential()
 
 network.add(layers.Dense(300, activation='relu', input_shape=(28*28,)))
@@ -45,18 +33,63 @@ network.add(layers.Dense(200, activation='relu'))
 network.add(layers.Dense(100, activation='relu'))
 network.add(layers.Dense(10, activation='softmax'))
 
-network.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy', 'Precision'])
-history = network.fit(x_train, y_train, epochs=10, validation_data=(x_val, y_val))
+networkSGD = network
+networkAdam = network
+networkNadam = network
+networkAdadelta = network
+networkRMSprop = network
 
-pd.DataFrame(history.history).plot(figsize=(10, 7))
+#network.compile(loss='categorical_crossentropy', optimizer=Adadelta(learning_rate=0.001), metrics=['accuracy', 'Precision'])
+#history = network.fit(x_train, y_train, epochs=30, validation_data=(x_val, y_val))
+networkAdam.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=0.001), metrics=['accuracy'])
+historyAdam = networkAdam.fit(x_train, y_train, epochs=30)
+
+networkAdadelta.compile(loss='categorical_crossentropy', optimizer=Adadelta(learning_rate=0.001), metrics=['accuracy'])
+historyAdadelta = networkAdadelta.fit(x_train, y_train, epochs=30)
+
+networkNadam.compile(loss='categorical_crossentropy', optimizer=Nadam(learning_rate=0.001), metrics=['accuracy'])
+historyNadam = networkAdam.fit(x_train, y_train, epochs=30)
+
+networkSGD.compile(loss='categorical_crossentropy', optimizer=SGD(learning_rate=0.001), metrics=['accuracy'])
+historySGD = networkAdadelta.fit(x_train, y_train, epochs=30)
+
+networkRMSprop.compile(loss='categorical_crossentropy', optimizer=RMSprop(learning_rate=0.001), metrics=['accuracy'])
+historyRMSprop = networkAdam.fit(x_train, y_train, epochs=30)
+
+
+# Convertir los historiales a DataFrames
+df_adam = pd.DataFrame(historyAdam.history).add_prefix("Adam_")
+df_adadelta = pd.DataFrame(historyAdadelta.history).add_prefix("Adadelta_")
+df_rmsprop = pd.DataFrame(historyRMSprop.history).add_prefix("RMSprop_")
+df_nadam = pd.DataFrame(historyNadam.history).add_prefix("Nadam_")
+df_sgd = pd.DataFrame(historySGD.history).add_prefix("SGD_")
+
+# Concatenar los DataFrames (unidos por índice, que representa las épocas)
+df_combined = pd.concat([df_adam, df_adadelta, df_rmsprop, df_nadam, df_sgd], axis=1)
+
+# Graficar
+df_combined.plot(figsize=(12, 8))
+plt.title("Comparación de Optimización entre Adam, Adadelta, RMSprop, Nadam y SGD")
+plt.xlabel("Época")
+plt.ylabel("Métrica")
 plt.grid(True)
-plt.gca().set_ylim(0, 1.2)
-plt.xlabel("epochs")
 plt.show()
 
-predict = np.argmax(network.predict(x_test), axis= -1)
-print("Predict: ", predict.shape)
-print("predict 240: ", predict[240])
+"""pd.DataFrame(historyAdam.history).plot(figsize=(10, 7))
+pd.DataFrame(historyAdadelta.history).plot(figsize=(10, 7))
+plt.grid(True)
+plt.gca().set_ylim(0, 1.2)
+plt.title("Comparacion de algoritmos")
+plt.xlabel("epochs")
+plt.show()
+"""
+"""predict = np.argmax(network.predict(x_test), axis= -1)
+plt.imshow(x_test[243].reshape(28, 28))
+# the label of the first number
+plt.title(f"Digit: {predict[243]}") #aqui ponen el vector que quieren comparar con el numero que graficaron
+plt.axis("off")
+plt.show()"""
+
 """
 plt.imshow(x_test[0].reshape(28, 28), cmap='gray')
 plt.title("Ejemplo de imagen de prueba")
