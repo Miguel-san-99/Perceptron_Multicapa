@@ -32,6 +32,12 @@ x_test = x_test.astype("float32") / 255.0
 y_train = to_categorical(np.array(y_train))
 y_val = to_categorical(np.array(y_val))
 
+print("x_train: ", x_train.shape)
+print("x_val: ", x_val.shape)
+print("x_test: ", x_test.shape)
+print("y_train: ", y_train.shape)
+print("y_val: ", y_val.shape)
+
 network = models.Sequential()
 
 network.add(layers.Dense(300, activation='relu', input_shape=(28*28,)))
@@ -48,10 +54,9 @@ plt.gca().set_ylim(0, 1.2)
 plt.xlabel("epochs")
 plt.show()
 
-test_loss, test_acc, test_prec = network.evaluate(x_test)
-print("test_acc: ", test_acc)
-print("test_prec: ", test_prec)
-
+predict = np.argmax(network.predict(x_test), axis= -1)
+print("Predict: ", predict.shape)
+print("predict 240: ", predict[240])
 """
 plt.imshow(x_test[0].reshape(28, 28), cmap='gray')
 plt.title("Ejemplo de imagen de prueba")
